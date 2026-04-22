@@ -762,7 +762,7 @@ fn push_event(
     emit_state_file(worker);
 }
 
-/// Write current worker state to `.nexus/sudocode/worker-state.json` under the worker's cwd.
+/// Write current worker state to `.scode/worker-state.json` under the worker's cwd.
 /// This is the file-based observability surface: external observers (sudocodehip, orchestrators)
 /// poll this file instead of requiring an HTTP route on the opencode binary.
 #[derive(serde::Serialize)]
@@ -781,8 +781,7 @@ struct StateSnapshot<'a> {
 
 fn emit_state_file(worker: &Worker) {
     let state_dir = std::path::Path::new(&worker.cwd)
-        .join(".nexus")
-        .join("sudocode");
+        .join(".scode");
     if std::fs::create_dir_all(&state_dir).is_err() {
         return;
     }
@@ -1438,8 +1437,7 @@ mod tests {
 
         // After create the worker is Spawning — state file should exist
         let state_path = cwd_path
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("worker-state.json");
         assert!(
             state_path.exists(),

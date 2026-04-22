@@ -2787,7 +2787,7 @@ fn discover_definition_roots(cwd: &Path, leaf: &str) -> Vec<(DefinitionSource, P
         push_unique_root(
             &mut roots,
             DefinitionSource::ProjectClaw,
-            ancestor.join(".nexus").join("sudocode").join(leaf),
+            ancestor.join(".scode").join(leaf),
         );
         push_unique_root(
             &mut roots,
@@ -2855,7 +2855,7 @@ fn discover_skill_roots(cwd: &Path) -> Vec<SkillRoot> {
         push_unique_skill_root(
             &mut roots,
             DefinitionSource::ProjectClaw,
-            ancestor.join(".nexus").join("sudocode").join("skills"),
+            ancestor.join(".scode").join("skills"),
             SkillOrigin::SkillsDir,
         );
         push_unique_skill_root(
@@ -2885,7 +2885,7 @@ fn discover_skill_roots(cwd: &Path) -> Vec<SkillRoot> {
         push_unique_skill_root(
             &mut roots,
             DefinitionSource::ProjectClaw,
-            ancestor.join(".nexus").join("sudocode").join("commands"),
+            ancestor.join(".scode").join("commands"),
             SkillOrigin::LegacyCommandsDir,
         );
         push_unique_skill_root(
@@ -3769,7 +3769,7 @@ fn render_agents_usage(unexpected: Option<&str>) -> String {
         "Agents".to_string(),
         "  Usage            /agents [list|help]".to_string(),
         "  Direct CLI       scode agents".to_string(),
-        "  Sources          .nexus/sudocode/agents, ~/.nexus/sudocode/agents, $SUDO_CODE_CONFIG_HOME/agents".to_string(),
+        "  Sources          .scode/agents, ~/.nexus/sudocode/agents, $SUDO_CODE_CONFIG_HOME/agents".to_string(),
     ];
     if let Some(args) = unexpected {
         lines.push(format!("  Unexpected       {args}"));
@@ -3784,7 +3784,7 @@ fn render_agents_usage_json(unexpected: Option<&str>) -> Value {
         "usage": {
             "slash_command": "/agents [list|help]",
             "direct_cli": "scode agents [list|help]",
-            "sources": [".nexus/sudocode/agents", "~/.nexus/sudocode/agents", "$SUDO_CODE_CONFIG_HOME/agents"],
+            "sources": [".scode/agents", "~/.nexus/sudocode/agents", "$SUDO_CODE_CONFIG_HOME/agents"],
         },
         "unexpected": unexpected,
     })
@@ -3798,7 +3798,7 @@ fn render_skills_usage(unexpected: Option<&str>) -> String {
         "  Direct CLI       scode skills [list|install <path>|help|<skill> [args]]".to_string(),
         "  Invoke           /skills help overview -> $help overview".to_string(),
         "  Install root     $SUDO_CODE_CONFIG_HOME/skills or ~/.nexus/sudocode/skills".to_string(),
-        "  Sources          .nexus/sudocode/skills, .omc/skills, .agents/skills, .codex/skills, .claude/skills, ~/.nexus/sudocode/skills, ~/.omc/skills, ~/.claude/skills/omc-learned, ~/.codex/skills, ~/.claude/skills, legacy /commands".to_string(),
+        "  Sources          .scode/skills, .omc/skills, .agents/skills, .codex/skills, .claude/skills, ~/.nexus/sudocode/skills, ~/.omc/skills, ~/.claude/skills/omc-learned, ~/.codex/skills, ~/.claude/skills, legacy /commands".to_string(),
     ];
     if let Some(args) = unexpected {
         lines.push(format!("  Unexpected       {args}"));
@@ -3817,7 +3817,7 @@ fn render_skills_usage_json(unexpected: Option<&str>) -> Value {
             "invoke": "/skills help overview -> $help overview",
             "install_root": "$SUDO_CODE_CONFIG_HOME/skills or ~/.nexus/sudocode/skills",
             "sources": [
-                ".nexus/sudocode/skills",
+                ".scode/skills",
                 ".omc/skills",
                 ".agents/skills",
                 ".codex/skills",
@@ -3840,7 +3840,7 @@ fn render_mcp_usage(unexpected: Option<&str>) -> String {
         "MCP".to_string(),
         "  Usage            /mcp [list|show <server>|help]".to_string(),
         "  Direct CLI       scode mcp [list|show <server>|help]".to_string(),
-        "  Sources          .nexus/sudocode/settings.json, .nexus/sudocode/settings.local.json"
+        "  Sources          .scode/settings.json, .scode/settings.local.json"
             .to_string(),
     ];
     if let Some(args) = unexpected {
@@ -3856,7 +3856,7 @@ fn render_mcp_usage_json(unexpected: Option<&str>) -> Value {
         "usage": {
             "slash_command": "/mcp [list|show <server>|help]",
             "direct_cli": "scode mcp [list|show <server>|help]",
-            "sources": [".nexus/sudocode/settings.json", ".nexus/sudocode/settings.local.json"],
+            "sources": [".scode/settings.json", ".scode/settings.local.json"],
         },
         "unexpected": unexpected,
     })
@@ -5161,8 +5161,8 @@ mod tests {
     #[test]
     fn resolves_project_skills_and_legacy_commands_from_shared_registry() {
         let workspace = temp_dir("resolve-project-skills");
-        let project_skills = workspace.join(".nexus").join("sudocode").join("skills");
-        let legacy_commands = workspace.join(".nexus").join("sudocode").join("commands");
+        let project_skills = workspace.join(".scode").join("skills");
+        let legacy_commands = workspace.join(".scode").join("commands");
 
         write_skill(&project_skills, "plan", "Project planning guidance");
         write_legacy_command(&legacy_commands, "handoff", "Legacy handoff guidance");
@@ -5242,7 +5242,7 @@ mod tests {
         assert!(agents_help.contains("Usage            /agents [list|help]"));
         assert!(agents_help.contains("Direct CLI       scode agents"));
         assert!(agents_help
-            .contains("Sources          .nexus/sudocode/agents, ~/.nexus/sudocode/agents, $SUDO_CODE_CONFIG_HOME/agents"));
+            .contains("Sources          .scode/agents, ~/.nexus/sudocode/agents, $SUDO_CODE_CONFIG_HOME/agents"));
 
         let agents_unexpected =
             super::handle_agents_slash_command(Some("show planner"), &cwd).expect("agents usage");
@@ -5389,13 +5389,12 @@ mod tests {
     fn renders_mcp_reports_from_loaded_config() {
         let workspace = temp_dir("mcp-config-workspace");
         let config_home = temp_dir("mcp-config-home");
-        fs::create_dir_all(workspace.join(".nexus").join("sudocode"))
+        fs::create_dir_all(workspace.join(".scode"))
             .expect("workspace config dir");
         fs::create_dir_all(&config_home).expect("config home");
         fs::write(
             workspace
-                .join(".nexus")
-                .join("sudocode")
+                .join(".scode")
                 .join("settings.json"),
             r#"{
               "mcpServers": {
@@ -5421,8 +5420,7 @@ mod tests {
         .expect("write settings");
         fs::write(
             workspace
-                .join(".nexus")
-                .join("sudocode")
+                .join(".scode")
                 .join("settings.local.json"),
             r#"{
               "mcpServers": {
@@ -5473,13 +5471,12 @@ mod tests {
     fn renders_mcp_reports_as_json() {
         let workspace = temp_dir("mcp-json-workspace");
         let config_home = temp_dir("mcp-json-home");
-        fs::create_dir_all(workspace.join(".nexus").join("sudocode"))
+        fs::create_dir_all(workspace.join(".scode"))
             .expect("workspace config dir");
         fs::create_dir_all(&config_home).expect("config home");
         fs::write(
             workspace
-                .join(".nexus")
-                .join("sudocode")
+                .join(".scode")
                 .join("settings.json"),
             r#"{
               "mcpServers": {
@@ -5505,8 +5502,7 @@ mod tests {
         .expect("write settings");
         fs::write(
             workspace
-                .join(".nexus")
-                .join("sudocode")
+                .join(".scode")
                 .join("settings.local.json"),
             r#"{
               "mcpServers": {
@@ -5552,7 +5548,7 @@ mod tests {
         let help =
             render_mcp_report_json_for(&loader, &workspace, Some("help")).expect("mcp help json");
         assert_eq!(help["action"], "help");
-        assert_eq!(help["usage"]["sources"][0], ".nexus/sudocode/settings.json");
+        assert_eq!(help["usage"]["sources"][0], ".scode/settings.json");
 
         let _ = fs::remove_dir_all(workspace);
         let _ = fs::remove_dir_all(config_home);
@@ -5568,12 +5564,12 @@ mod tests {
         let _guard = env_guard();
         let workspace = temp_dir("mcp-degrades-144");
         let config_home = temp_dir("mcp-degrades-144-cfg");
-        fs::create_dir_all(workspace.join(".nexus").join("sudocode"))
-            .expect("create workspace .nexus/sudocode dir");
+        fs::create_dir_all(workspace.join(".scode"))
+            .expect("create workspace .scode dir");
         fs::create_dir_all(&config_home).expect("create config home");
         // One valid server + one malformed entry missing `command`.
         fs::write(
-            workspace.join(".scode.json"),
+            workspace.join(".scode/scode.json"),
             r#"{
   "mcpServers": {
     "everything": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"]},
@@ -5582,7 +5578,7 @@ mod tests {
 }
 "#,
         )
-        .expect("write malformed .scode.json");
+        .expect("write malformed .scode/scode.json");
 
         let loader = ConfigLoader::new(&workspace, &config_home);
         // list action: must return Ok (not Err) with degraded envelope.

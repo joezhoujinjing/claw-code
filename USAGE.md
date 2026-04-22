@@ -54,7 +54,7 @@ cd rust
 
 ### Initialize a repository
 
-Set up a new repository with `.nexus/sudocode` config, `.scode.json`, `.gitignore` entries, and a `CLAUDE.md` guidance file:
+Set up a new repository with `.scode/` config directory, `.scode/scode.json`, `.gitignore` entries, and a `CLAUDE.md` guidance file:
 
 ```bash
 cd /path/to/your/repo
@@ -102,7 +102,7 @@ cd rust
 
 ### Inspect worker state
 
-The `scode state` command reads `.nexus/sudocode/worker-state.json`, which is written by the interactive REPL or a one-shot prompt when a worker executes a task. This file contains the worker ID, session reference, model, and permission mode.
+The `scode state` command reads `.scode/worker-state.json`, which is written by the interactive REPL or a one-shot prompt when a worker executes a task. This file contains the worker ID, session reference, model, and permission mode.
 
 Prerequisite: You must run `scode` (interactive REPL) or `scode prompt <text>` at least once in the repository to produce the worker state file.
 
@@ -118,7 +118,7 @@ JSON mode:
 
 If you run `scode state` before any worker has executed, you will see a helpful error:
 ```
-error: no worker state file found at .nexus/sudocode/worker-state.json
+error: no worker state file found at .scode/worker-state.json
   Hint: worker state is written by the interactive REPL or a non-interactive prompt.
   Run:   scode               # start the REPL (writes state on first turn)
   Or:    scode prompt <text> # run one non-interactive turn
@@ -325,7 +325,7 @@ Any model name that does not match an alias is passed through verbatim. This is 
 
 ### User-defined aliases
 
-You can add custom aliases in any settings file (`~/.nexus/sudocode/settings.json`, `.nexus/sudocode/settings.json`, or `.nexus/sudocode/settings.local.json`):
+You can add custom aliases in any settings file (`~/.nexus/sudocode/settings.json`, `.scode/settings.json`, or `.scode/settings.local.json`):
 
 ```json
 {
@@ -353,7 +353,7 @@ Local project settings override user-level settings. Aliases resolve through the
 The name "codex" appears in the Sudo Code ecosystem but it does **not** refer to OpenAI Codex (the code-generation model). Here is what it means in this project:
 
 - **`oh-my-codex` (OmX)** is the workflow and plugin layer that sits on top of `scode`. It provides planning modes, parallel multi-agent execution, notification routing, and other automation features. See [PHILOSOPHY.md](./PHILOSOPHY.md) and the [oh-my-codex repo](https://github.com/Yeachan-Heo/oh-my-codex).
-- **`.codex/` directories** (e.g. `.codex/skills`, `.codex/agents`, `.codex/commands`) are legacy lookup paths that `scode` still scans alongside the primary `.nexus/sudocode/` directories.
+- **`.codex/` directories** (e.g. `.codex/skills`, `.codex/agents`, `.codex/commands`) are legacy lookup paths that `scode` still scans alongside the primary `.scode/` directories.
 - **`CODEX_HOME`** is an optional environment variable that points to a custom root for user-level skill and command lookups.
 
 `scode` does **not** support OpenAI Codex sessions, the Codex CLI, or Codex session import/export. If you need to use OpenAI models (like GPT-4.1), configure the OpenAI-compatible provider as shown above in the [OpenAI-compatible endpoint](#openai-compatible-endpoint) and [OpenRouter](#openrouter) sections.
@@ -415,7 +415,7 @@ cd rust
 
 ## Session management
 
-REPL turns are persisted under `.nexus/sudocode/sessions/` in the current workspace.
+REPL turns are persisted under `.scode/sessions/` in the current workspace.
 
 ```bash
 cd rust
@@ -429,11 +429,11 @@ Useful interactive commands include `/help`, `/status`, `/cost`, `/config`, `/se
 
 Runtime config is loaded in this order, with later entries overriding earlier ones:
 
-1. `~/.scode.json`
-2. `~/.config/scode/settings.json`
-3. `<repo>/.scode.json`
-4. `<repo>/.nexus/sudocode/settings.json`
-5. `<repo>/.nexus/sudocode/settings.local.json`
+1. `~/.nexus/sudocode/scode.json`
+2. `~/.nexus/sudocode/settings.json`
+3. `<repo>/.scode/scode.json`
+4. `<repo>/.scode/settings.json`
+5. `<repo>/.scode/settings.local.json`
 
 ## Mock parity harness
 

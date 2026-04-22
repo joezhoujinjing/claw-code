@@ -214,8 +214,8 @@ fn discover_instruction_files(cwd: &Path) -> std::io::Result<Vec<ContextFile>> {
         for candidate in [
             dir.join("CLAUDE.md"),
             dir.join("CLAUDE.local.md"),
-            dir.join(".nexus").join("sudocode").join("CLAUDE.md"),
-            dir.join(".nexus").join("sudocode").join("instructions.md"),
+            dir.join(".scode").join("CLAUDE.md"),
+            dir.join(".scode").join("instructions.md"),
         ] {
             push_context_file(&mut files, candidate)?;
         }
@@ -552,32 +552,30 @@ mod tests {
     fn discovers_instruction_files_from_ancestor_chain() {
         let root = temp_dir();
         let nested = root.join("apps").join("api");
-        fs::create_dir_all(nested.join(".nexus").join("sudocode")).expect("nested sudocode dir");
+        fs::create_dir_all(nested.join(".scode")).expect("nested sudocode dir");
         fs::write(root.join("CLAUDE.md"), "root instructions").expect("write root instructions");
         fs::write(root.join("CLAUDE.local.md"), "local instructions")
             .expect("write local instructions");
         fs::create_dir_all(root.join("apps")).expect("apps dir");
-        fs::create_dir_all(root.join("apps").join(".nexus").join("sudocode"))
+        fs::create_dir_all(root.join("apps").join(".scode"))
             .expect("apps sudocode dir");
         fs::write(root.join("apps").join("CLAUDE.md"), "apps instructions")
             .expect("write apps instructions");
         fs::write(
             root.join("apps")
-                .join(".nexus")
-                .join("sudocode")
+                .join(".scode")
                 .join("instructions.md"),
             "apps dot claude instructions",
         )
         .expect("write apps dot claude instructions");
         fs::write(
-            nested.join(".nexus").join("sudocode").join("CLAUDE.md"),
+            nested.join(".scode").join("CLAUDE.md"),
             "nested rules",
         )
         .expect("write nested rules");
         fs::write(
             nested
-                .join(".nexus")
-                .join("sudocode")
+                .join(".scode")
                 .join("instructions.md"),
             "nested instructions",
         )
@@ -638,7 +636,7 @@ mod tests {
     #[test]
     fn displays_context_paths_compactly() {
         assert_eq!(
-            display_context_path(Path::new("/tmp/project/.nexus/sudocode/CLAUDE.md")),
+            display_context_path(Path::new("/tmp/project/.scode/CLAUDE.md")),
             "CLAUDE.md"
         );
     }
@@ -798,10 +796,10 @@ mod tests {
     #[test]
     fn load_system_prompt_reads_claude_files_and_config() {
         let root = temp_dir();
-        fs::create_dir_all(root.join(".nexus").join("sudocode")).expect("scode dir");
+        fs::create_dir_all(root.join(".scode")).expect("scode dir");
         fs::write(root.join("CLAUDE.md"), "Project rules").expect("write instructions");
         fs::write(
-            root.join(".nexus").join("sudocode").join("settings.json"),
+            root.join(".scode").join("settings.json"),
             r#"{"permissionMode":"acceptEdits"}"#,
         )
         .expect("write settings");
@@ -841,10 +839,10 @@ mod tests {
     #[test]
     fn renders_claude_code_style_sections_with_project_context() {
         let root = temp_dir();
-        fs::create_dir_all(root.join(".nexus").join("sudocode")).expect("scode dir");
+        fs::create_dir_all(root.join(".scode")).expect("scode dir");
         fs::write(root.join("CLAUDE.md"), "Project rules").expect("write CLAUDE.md");
         fs::write(
-            root.join(".nexus").join("sudocode").join("settings.json"),
+            root.join(".scode").join("settings.json"),
             r#"{"permissionMode":"acceptEdits"}"#,
         )
         .expect("write settings");
@@ -883,11 +881,10 @@ mod tests {
     fn discovers_dot_claude_instructions_markdown() {
         let root = temp_dir();
         let nested = root.join("apps").join("api");
-        fs::create_dir_all(nested.join(".nexus").join("sudocode")).expect("nested sudocode dir");
+        fs::create_dir_all(nested.join(".scode")).expect("nested sudocode dir");
         fs::write(
             nested
-                .join(".nexus")
-                .join("sudocode")
+                .join(".scode")
                 .join("instructions.md"),
             "instruction markdown",
         )
@@ -897,7 +894,7 @@ mod tests {
         assert!(context
             .instruction_files
             .iter()
-            .any(|file| file.path.ends_with(".nexus/sudocode/instructions.md")));
+            .any(|file| file.path.ends_with(".scode/instructions.md")));
         assert!(
             render_instruction_files(&context.instruction_files).contains("instruction markdown")
         );

@@ -134,18 +134,17 @@ fn config_command_loads_defaults_from_standard_config_locations() {
     // given
     let temp_dir = unique_temp_dir("config-defaults");
     let config_home = temp_dir.join("home").join(".nexus").join("sudocode");
-    fs::create_dir_all(temp_dir.join(".nexus").join("sudocode"))
+    fs::create_dir_all(temp_dir.join(".scode"))
         .expect("project config dir should exist");
     fs::create_dir_all(&config_home).expect("home config dir should exist");
 
     fs::write(config_home.join("settings.json"), r#"{"model":"haiku"}"#)
         .expect("write user settings");
-    fs::write(temp_dir.join(".scode.json"), r#"{"model":"sonnet"}"#)
+    fs::write(temp_dir.join(".scode/scode.json"), r#"{"model":"sonnet"}"#)
         .expect("write project settings");
     fs::write(
         temp_dir
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("settings.local.json"),
         r#"{"model":"opus"}"#,
     )
@@ -177,11 +176,10 @@ fn config_command_loads_defaults_from_standard_config_locations() {
             .to_str()
             .expect("utf8 path")
     ));
-    assert!(stdout.contains(temp_dir.join(".scode.json").to_str().expect("utf8 path")));
+    assert!(stdout.contains(temp_dir.join(".scode/scode.json").to_str().expect("utf8 path")));
     assert!(stdout.contains(
         temp_dir
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("settings.local.json")
             .to_str()
             .expect("utf8 path")

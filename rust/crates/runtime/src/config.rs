@@ -251,23 +251,15 @@ impl ConfigLoader {
             },
             ConfigEntry {
                 source: ConfigSource::Project,
-                path: self.cwd.join(".scode.json"),
+                path: self.cwd.join(".scode").join("scode.json"),
             },
             ConfigEntry {
                 source: ConfigSource::Project,
-                path: self
-                    .cwd
-                    .join(".nexus")
-                    .join("sudocode")
-                    .join("settings.json"),
+                path: self.cwd.join(".scode").join("settings.json"),
             },
             ConfigEntry {
                 source: ConfigSource::Local,
-                path: self
-                    .cwd
-                    .join(".nexus")
-                    .join("sudocode")
-                    .join("settings.local.json"),
+                path: self.cwd.join(".scode").join("settings.local.json"),
             },
         ]
     }
@@ -1298,7 +1290,7 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
 
         fs::write(
@@ -1312,18 +1304,17 @@ mod tests {
         )
         .expect("write user settings");
         fs::write(
-            cwd.join(".scode.json"),
+            cwd.join(".scode/scode.json"),
             r#"{"model":"project-compat","env":{"B":"2"}}"#,
         )
         .expect("write project compat config");
         fs::write(
-            cwd.join(".nexus").join("sudocode").join("settings.json"),
+            cwd.join(".scode").join("settings.json"),
             r#"{"env":{"C":"3"},"hooks":{"PostToolUse":["project"],"PostToolUseFailure":["project-failure"]},"permissions":{"ask":["Edit"]},"mcpServers":{"project":{"command":"uvx","args":["project"]}}}"#,
         )
         .expect("write project settings");
         fs::write(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
             r#"{"model":"opus","permissionMode":"acceptEdits"}"#,
         )
@@ -1386,12 +1377,11 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
 
         fs::write(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
             r#"{
               "sandbox": {
@@ -1427,7 +1417,7 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
         fs::write(
             home.join("settings.json"),
@@ -1533,7 +1523,7 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
 
         fs::write(
@@ -1570,8 +1560,7 @@ mod tests {
         )
         .expect("write user settings");
         fs::write(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
             r#"{
               "mcpServers": {
@@ -1664,7 +1653,7 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
 
         fs::write(
@@ -1702,7 +1691,7 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
 
         fs::write(
@@ -1782,7 +1771,7 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
 
         fs::write(
@@ -1791,8 +1780,7 @@ mod tests {
         )
         .expect("write user settings");
         fs::write(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
             r#"{"aliases":{"smart":"claude-sonnet-4-6","cheap":"grok-3-mini"}}"#,
         )
@@ -1882,8 +1870,8 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let home = root.join("home").join(".nexus").join("sudocode");
-        let project_settings = cwd.join(".nexus").join("sudocode").join("settings.json");
-        fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("project config dir");
+        let project_settings = cwd.join(".scode").join("settings.json");
+        fs::create_dir_all(cwd.join(".scode")).expect("project config dir");
         fs::create_dir_all(&home).expect("home config dir");
 
         fs::write(

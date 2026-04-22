@@ -10,8 +10,8 @@ const STARTER_CONFIG_JSON: &str = concat!(
 );
 const GITIGNORE_COMMENT: &str = "# Sudo Code local artifacts";
 const GITIGNORE_ENTRIES: [&str; 3] = [
-    ".nexus/sudocode/settings.local.json",
-    ".nexus/sudocode/sessions/",
+    ".scode/settings.local.json",
+    ".scode/sessions/",
     ".sudocodehip/",
 ];
 
@@ -126,15 +126,15 @@ struct RepoDetection {
 pub(crate) fn initialize_repo(cwd: &Path) -> Result<InitReport, Box<dyn std::error::Error>> {
     let mut artifacts = Vec::new();
 
-    let config_dir = cwd.join(".nexus").join("sudocode");
+    let config_dir = cwd.join(".scode");
     artifacts.push(InitArtifact {
-        name: ".nexus/sudocode/",
+        name: ".scode/",
         status: ensure_dir(&config_dir)?,
     });
 
-    let config_json = cwd.join(".scode.json");
+    let config_json = cwd.join(".scode/scode.json");
     artifacts.push(InitArtifact {
-        name: ".scode.json",
+        name: ".scode/scode.json",
         status: write_file_if_missing(&config_json, STARTER_CONFIG_JSON)?,
     });
 
@@ -255,7 +255,7 @@ pub(crate) fn render_init_claude_md(cwd: &Path) -> String {
 
     lines.push("## Working agreement".to_string());
     lines.push("- Prefer small, reviewable changes and keep generated bootstrap files aligned with actual repo workflows.".to_string());
-    lines.push("- Keep shared defaults in `.scode.json`; reserve `.nexus/sudocode/settings.local.json` for machine-local overrides.".to_string());
+    lines.push("- Keep shared defaults in `.scode/scode.json`; reserve `.scode/settings.local.json` for machine-local overrides.".to_string());
     lines.push("- Do not overwrite existing `CLAUDE.md` content automatically; update it intentionally when repo workflows change.".to_string());
     lines.push(String::new());
 
@@ -400,16 +400,16 @@ mod tests {
 
         let report = initialize_repo(&root).expect("init should succeed");
         let rendered = report.render();
-        assert!(rendered.contains(".nexus/sudocode/"));
-        assert!(rendered.contains(".scode.json"));
+        assert!(rendered.contains(".scode/"));
+        assert!(rendered.contains(".scode/scode.json"));
         assert!(rendered.contains("created"));
         assert!(rendered.contains(".gitignore       created"));
         assert!(rendered.contains("CLAUDE.md        created"));
-        assert!(root.join(".nexus").join("sudocode").is_dir());
-        assert!(root.join(".scode.json").is_file());
+        assert!(root.join(".scode").is_dir());
+        assert!(root.join(".scode/scode.json").is_file());
         assert!(root.join("CLAUDE.md").is_file());
         assert_eq!(
-            fs::read_to_string(root.join(".scode.json")).expect("read config json"),
+            fs::read_to_string(root.join(".scode/scode.json")).expect("read config json"),
             concat!(
                 "{\n",
                 "  \"permissions\": {\n",
@@ -419,8 +419,8 @@ mod tests {
             )
         );
         let gitignore = fs::read_to_string(root.join(".gitignore")).expect("read gitignore");
-        assert!(gitignore.contains(".nexus/sudocode/settings.local.json"));
-        assert!(gitignore.contains(".nexus/sudocode/sessions/"));
+        assert!(gitignore.contains(".scode/settings.local.json"));
+        assert!(gitignore.contains(".scode/sessions/"));
         assert!(gitignore.contains(".sudocodehip/"));
         let claude_md = fs::read_to_string(root.join("CLAUDE.md")).expect("read claude md");
         assert!(claude_md.contains("Languages: Rust."));
@@ -436,7 +436,7 @@ mod tests {
         fs::write(root.join("CLAUDE.md"), "custom guidance\n").expect("write existing claude md");
         fs::write(
             root.join(".gitignore"),
-            ".nexus/sudocode/settings.local.json\n",
+            ".scode/settings.local.json\n",
         )
         .expect("write gitignore");
 
@@ -446,8 +446,8 @@ mod tests {
             .contains("CLAUDE.md        skipped (already exists)"));
         let second = initialize_repo(&root).expect("second init should succeed");
         let second_rendered = second.render();
-        assert!(second_rendered.contains(".nexus/sudocode/"));
-        assert!(second_rendered.contains(".scode.json"));
+        assert!(second_rendered.contains(".scode/"));
+        assert!(second_rendered.contains(".scode/scode.json"));
         assert!(second_rendered.contains("skipped (already exists)"));
         assert!(second_rendered.contains(".gitignore       skipped (already exists)"));
         assert!(second_rendered.contains("CLAUDE.md        skipped (already exists)"));
@@ -458,11 +458,11 @@ mod tests {
         let gitignore = fs::read_to_string(root.join(".gitignore")).expect("read gitignore");
         assert_eq!(
             gitignore
-                .matches(".nexus/sudocode/settings.local.json")
+                .matches(".scode/settings.local.json")
                 .count(),
             1
         );
-        assert_eq!(gitignore.matches(".nexus/sudocode/sessions/").count(), 1);
+        assert_eq!(gitignore.matches(".scode/sessions/").count(), 1);
         assert_eq!(gitignore.matches(".sudocodehip/").count(), 1);
 
         fs::remove_dir_all(root).expect("cleanup temp dir");
@@ -481,8 +481,8 @@ mod tests {
         assert_eq!(
             created_names,
             vec![
-                ".nexus/sudocode/".to_string(),
-                ".scode.json".to_string(),
+                ".scode/".to_string(),
+                ".scode/scode.json".to_string(),
                 ".gitignore".to_string(),
                 "CLAUDE.md".to_string(),
             ],
@@ -498,8 +498,8 @@ mod tests {
         assert_eq!(
             skipped_names,
             vec![
-                ".nexus/sudocode/".to_string(),
-                ".scode.json".to_string(),
+                ".scode/".to_string(),
+                ".scode/scode.json".to_string(),
                 ".gitignore".to_string(),
                 "CLAUDE.md".to_string(),
             ],

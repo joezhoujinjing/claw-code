@@ -2,6 +2,6 @@ target/
 .omx/
 .sudocode-agents/
 # Sudo Code local artifacts
-.nexus/sudocode/settings.local.json
-.nexus/sudocode/sessions/
+.scode/settings.local.json
+.scode/sessions/
 .sudocodehip/

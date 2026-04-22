@@ -118,7 +118,7 @@ fn resumed_config_command_loads_settings_files_end_to_end() {
     let temp_dir = unique_temp_dir("resume-config");
     let project_dir = temp_dir.join("project");
     let config_home = temp_dir.join("home").join(".nexus").join("sudocode");
-    fs::create_dir_all(project_dir.join(".nexus").join("sudocode"))
+    fs::create_dir_all(project_dir.join(".scode"))
         .expect("project config dir should exist");
     fs::create_dir_all(&config_home).expect("config home should exist");
 
@@ -132,8 +132,7 @@ fn resumed_config_command_loads_settings_files_end_to_end() {
         .expect("user config should write");
     fs::write(
         project_dir
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("settings.local.json"),
         r#"{"model":"opus"}"#,
     )
@@ -173,8 +172,7 @@ fn resumed_config_command_loads_settings_files_end_to_end() {
     ));
     assert!(stdout.contains(
         project_dir
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("settings.local.json")
             .to_str()
             .expect("utf8 path")

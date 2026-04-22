@@ -74,7 +74,7 @@ enum ModelSource {
     Flag,
     /// ANTHROPIC_MODEL environment variable (when no flag was passed).
     Env,
-    /// `model` key in `.scode.json` / `.nexus/sudocode/settings.json` (when neither
+    /// `model` key in `.scode/scode.json` / `.scode/settings.json` (when neither
     /// flag nor env set it).
     Config,
     /// Compiled-in DEFAULT_MODEL fallback.
@@ -897,7 +897,7 @@ fn parse_args(args: &[String]) -> Result<CliAction, String> {
             })
         }
         // #146: `config` is pure-local read-only introspection (merges
-        // `.scode.json` + `.nexus/sudocode/settings.json` from disk, no network, no
+        // `.scode/scode.json` + `.scode/settings.json` from disk, no network, no
         // state mutation). Previously callers had to spin up a session with
         // `scode --resume SESSION.jsonl /config` to see their own config,
         // which is synthetic friction. Accepts an optional section name
@@ -2011,15 +2011,14 @@ fn run_doctor(output_format: CliOutputFormat) -> Result<(), Box<dyn std::error::
 ///
 /// Tool descriptors come from [`tools::mvp_tool_specs`] and calls are
 /// dispatched through [`tools::execute_tool`], so this server exposes exactly
-/// Read `.nexus/sudocode/worker-state.json` from the current working directory and print it.
+/// Read `.scode/worker-state.json` from the current working directory and print it.
 /// This is the file-based worker observability surface: `push_event()` in `worker_boot.rs`
 /// atomically writes state transitions here so external observers (sudocodehip, orchestrators)
 /// can poll current `WorkerStatus` without needing an HTTP route on the opencode binary.
 fn run_worker_state(output_format: CliOutputFormat) -> Result<(), Box<dyn std::error::Error>> {
     let cwd = env::current_dir()?;
     let state_path = cwd
-        .join(".nexus")
-        .join("sudocode")
+        .join(".scode")
         .join("worker-state.json");
     if !state_path.exists() {
         // #139: this error used to say "run a worker first" without telling
@@ -2822,7 +2821,7 @@ struct StatusContext {
     git_branch: Option<String>,
     git_summary: GitWorkspaceSummary,
     sandbox_status: runtime::SandboxStatus,
-    /// #143: when `.scode.json` (or another loaded config file) fails to parse,
+    /// #143: when `.scode/scode.json` (or another loaded config file) fails to parse,
     /// we capture the parse error here and still populate every field that
     /// doesn't depend on runtime config (workspace, git, sandbox defaults,
     /// discovery counts). Top-level JSON output then reports
@@ -3003,7 +3002,7 @@ fn render_resume_usage() -> String {
     format!(
         "Resume
   Usage            /resume <session-path|session-id|{LATEST_SESSION_REFERENCE}>
-  Auto-save        .nexus/sudocode/sessions/<session-id>.{PRIMARY_SESSION_EXTENSION}
+  Auto-save        .scode/sessions/<session-id>.{PRIMARY_SESSION_EXTENSION}
   Tip              use /session list to inspect saved sessions"
     )
 }
@@ -5418,7 +5417,7 @@ fn render_repl_help() -> String {
         "  Tab                  Complete commands, modes, and recent sessions".to_string(),
         "  Ctrl-C               Clear input (or exit on empty prompt)".to_string(),
         "  Shift+Enter/Ctrl+J   Insert a newline".to_string(),
-        "  Auto-save            .nexus/sudocode/sessions/<session-id>.jsonl".to_string(),
+        "  Auto-save            .scode/sessions/<session-id>.jsonl".to_string(),
         "  Resume latest        /resume latest".to_string(),
         "  Browse sessions      /session list".to_string(),
         "  Show prompt history  /history [count]".to_string(),
@@ -5530,7 +5529,7 @@ fn status_json_value(
             "session": context.session_path.as_ref().map_or_else(|| "live-repl".to_string(), |path| path.display().to_string()),
             "session_id": context.session_path.as_ref().and_then(|path| {
                 // Session files are named <session-id>.jsonl directly under
-                // .nexus/sudocode/sessions/. Extract the stem (drop the .jsonl extension).
+                // .scode/sessions/. Extract the stem (drop the .jsonl extension).
                 path.file_stem().map(|n| n.to_string_lossy().into_owned())
             }),
             "loaded_config_files": context.loaded_config_files,
@@ -5833,14 +5832,14 @@ fn render_help_topic(topic: LocalHelpTopic) -> String {
             .to_string(),
         LocalHelpTopic::Init => "Init
   Usage            scode init [--output-format <format>]
-  Purpose          create .nexus/sudocode/, .scode.json, .gitignore, and CLAUDE.md in the current project
+  Purpose          create .scode/, .scode/scode.json, .gitignore, and CLAUDE.md in the current project
   Output           list of created vs. skipped files (idempotent: safe to re-run)
   Formats          text (default), json
   Related          scode status · scode doctor"
             .to_string(),
         LocalHelpTopic::State => "State
   Usage            scode state [--output-format <format>]
-  Purpose          read .nexus/sudocode/worker-state.json written by the interactive REPL or a one-shot prompt
+  Purpose          read .scode/worker-state.json written by the interactive REPL or a one-shot prompt
   Output           worker id, model, permissions, session reference (text or json)
   Formats          text (default), json
   Produces state   `scode` (interactive REPL) or `scode prompt <text>` (one non-interactive turn)
@@ -5851,7 +5850,7 @@ fn render_help_topic(topic: LocalHelpTopic) -> String {
         LocalHelpTopic::Export => "Export
   Usage            scode export [--session <id|latest>] [--output <path>] [--output-format <format>]
   Purpose          serialize a managed session to JSON for review, transfer, or archival
-  Defaults         --session latest (most recent managed session in .nexus/sudocode/sessions/)
+  Defaults         --session latest (most recent managed session in .scode/sessions/)
   Formats          text (default), json
   Related          /session list · scode --resume latest"
             .to_string(),
@@ -8972,7 +8971,7 @@ fn print_help_to(out: &mut impl Write) -> io::Result<()> {
     writeln!(out, "Session shortcuts:")?;
     writeln!(
         out,
-        "  REPL turns auto-save to .nexus/sudocode/sessions/<session-id>.{PRIMARY_SESSION_EXTENSION}"
+        "  REPL turns auto-save to .scode/sessions/<session-id>.{PRIMARY_SESSION_EXTENSION}"
     )?;
     writeln!(
         out,
@@ -9376,11 +9375,11 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let config_home = root.join("config-home");
-        std::fs::create_dir_all(cwd.join(".nexus").join("sudocode"))
+        std::fs::create_dir_all(cwd.join(".scode"))
             .expect("project config dir should exist");
         std::fs::create_dir_all(&config_home).expect("config home should exist");
         std::fs::write(
-            cwd.join(".nexus").join("sudocode").join("settings.json"),
+            cwd.join(".scode").join("settings.json"),
             r#"{"permissionMode":"acceptEdits"}"#,
         )
         .expect("project config should write");
@@ -9411,11 +9410,11 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let config_home = root.join("config-home");
-        std::fs::create_dir_all(cwd.join(".nexus").join("sudocode"))
+        std::fs::create_dir_all(cwd.join(".scode"))
             .expect("project config dir should exist");
         std::fs::create_dir_all(&config_home).expect("config home should exist");
         std::fs::write(
-            cwd.join(".nexus").join("sudocode").join("settings.json"),
+            cwd.join(".scode").join("settings.json"),
             r#"{"permissionMode":"acceptEdits"}"#,
         )
         .expect("project config should write");
@@ -9686,11 +9685,11 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project");
         let config_home = root.join("config-home");
-        std::fs::create_dir_all(cwd.join(".nexus").join("sudocode"))
+        std::fs::create_dir_all(cwd.join(".scode"))
             .expect("project config dir should exist");
         std::fs::create_dir_all(&config_home).expect("config home should exist");
         std::fs::write(
-            cwd.join(".nexus").join("sudocode").join("settings.json"),
+            cwd.join(".scode").join("settings.json"),
             r#"{"aliases":{"fast":"claude-haiku-4-5-20251213","smart":"opus","cheap":"grok-3-mini"}}"#,
         )
         .expect("project config should write");
@@ -10239,10 +10238,10 @@ mod tests {
         let root = temp_dir();
         let cwd = root.join("project-with-malformed-mcp");
         std::fs::create_dir_all(&cwd).expect("project dir should exist");
-        std::fs::create_dir_all(cwd.join(".nexus")).expect("nexus dir");
+        std::fs::create_dir_all(cwd.join(".scode")).expect("scode dir");
         // One valid server + one malformed entry missing `command`.
         std::fs::write(
-            cwd.join(".scode.json"),
+            cwd.join(".scode/scode.json"),
             r#"{
   "mcpServers": {
     "everything": {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything"]},
@@ -10251,7 +10250,7 @@ mod tests {
 }
 "#,
         )
-        .expect("write malformed .scode.json");
+        .expect("write malformed .scode/scode.json");
 
         let context = with_current_dir(&cwd, || {
             super::status_context(None)
@@ -10342,7 +10341,7 @@ mod tests {
 
     #[test]
     fn state_error_surfaces_actionable_worker_commands_139() {
-        // #139: the error for missing `.nexus/sudocode/worker-state.json` must name
+        // #139: the error for missing `.scode/worker-state.json` must name
         // the concrete commands that produce worker state, otherwise consumers
         // have no discoverable path from the error to a fix.
         let _guard = env_lock();
@@ -11074,7 +11073,7 @@ mod tests {
     #[test]
     fn punctuation_bearing_single_token_still_dispatches_to_prompt() {
         // #140: Guard against test pollution — isolate cwd + env so this test
-        // doesn't pick up a stale .nexus/sudocode/settings.json from other tests that
+        // doesn't pick up a stale .scode/settings.json from other tests that
         // may have set `permissionMode: acceptEdits` in a shared cwd.
         let _guard = env_lock();
         let root = temp_dir();
@@ -11328,7 +11327,7 @@ mod tests {
         assert!(help.contains("/agents"));
         assert!(help.contains("/skills"));
         assert!(help.contains("/exit"));
-        assert!(help.contains("Auto-save            .nexus/sudocode/sessions/<session-id>.jsonl"));
+        assert!(help.contains("Auto-save            .scode/sessions/<session-id>.jsonl"));
         assert!(help.contains("Resume latest        /resume latest"));
     }
 
@@ -11945,7 +11944,7 @@ UU conflicted.rs",
         let handle = create_managed_session_handle("session-alpha").expect("jsonl handle");
         assert!(handle.path.ends_with("session-alpha.jsonl"));
 
-        let legacy_path = workspace.join(".nexus/sudocode/sessions/legacy.json");
+        let legacy_path = workspace.join(".scode/sessions/legacy.json");
         std::fs::create_dir_all(
             legacy_path
                 .parent()
@@ -12016,7 +12015,7 @@ UU conflicted.rs",
         let previous = std::env::current_dir().expect("cwd");
         std::env::set_current_dir(&workspace_b).expect("switch cwd");
 
-        let session_path = workspace_a.join(".nexus/sudocode/sessions/legacy-cross.jsonl");
+        let session_path = workspace_a.join(".scode/sessions/legacy-cross.jsonl");
         std::fs::create_dir_all(
             session_path
                 .parent()
@@ -12073,7 +12072,7 @@ UU conflicted.rs",
     fn resume_usage_mentions_latest_shortcut() {
         let usage = render_resume_usage();
         assert!(usage.contains("/resume <session-path|session-id|latest>"));
-        assert!(usage.contains(".nexus/sudocode/sessions/<session-id>.jsonl"));
+        assert!(usage.contains(".scode/sessions/<session-id>.jsonl"));
         assert!(usage.contains("/session list"));
     }
 

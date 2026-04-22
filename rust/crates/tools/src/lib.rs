@@ -3280,7 +3280,7 @@ fn skill_lookup_roots() -> Vec<SkillLookupRoot> {
     }
     push_skill_lookup_root(
         &mut roots,
-        std::path::PathBuf::from("/home/bellman/.nexus/sudocode/skills"),
+        std::path::PathBuf::from("/home/bellman/.scode/skills"),
         SkillLookupOrigin::SkillsDir,
     );
     push_skill_lookup_root(
@@ -3296,7 +3296,7 @@ fn push_project_skill_lookup_roots(roots: &mut Vec<SkillLookupRoot>, cwd: &std::
     for ancestor in cwd.ancestors() {
         push_prefixed_skill_lookup_roots(roots, &ancestor.join(".omc"));
         push_prefixed_skill_lookup_roots(roots, &ancestor.join(".agents"));
-        push_prefixed_skill_lookup_roots(roots, &ancestor.join(".nexus").join("sudocode"));
+        push_prefixed_skill_lookup_roots(roots, &ancestor.join(".scode"));
         push_prefixed_skill_lookup_roots(roots, &ancestor.join(".codex"));
         push_prefixed_skill_lookup_roots(roots, &ancestor.join(".claude"));
     }
@@ -5731,8 +5731,7 @@ fn config_file_for_scope(scope: ConfigScope) -> Result<PathBuf, String> {
     Ok(match scope {
         ConfigScope::Global => config_home_dir()?.join("settings.json"),
         ConfigScope::Settings => cwd
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("settings.local.json"),
     })
 }
@@ -6335,10 +6334,10 @@ mod tests {
     #[test]
     fn worker_create_merges_config_trusted_roots_without_per_call_override() {
         use std::fs;
-        // Write a .nexus/sudocode/settings.json in a temp dir with trustedRoots
+        // Write a .scode/settings.json in a temp dir with trustedRoots
         let worktree = temp_path("config-trust-worktree");
-        let config_dir = worktree.join(".nexus").join("sudocode");
-        fs::create_dir_all(&config_dir).expect("create .nexus/sudocode dir");
+        let config_dir = worktree.join(".scode");
+        fs::create_dir_all(&config_dir).expect("create .scode dir");
         // Use the actual OS temp dir so the worktree path matches the allowlist
         let tmp_root = std::env::temp_dir().to_str().expect("utf-8").to_string();
         let settings = format!("{{\"trustedRoots\": [\"{tmp_root}\"]}}");
@@ -6503,7 +6502,7 @@ mod tests {
 
     #[test]
     fn recovery_loop_state_file_reflects_transitions() {
-        // End-to-end proof: .nexus/sudocode/worker-state.json reflects every transition
+        // End-to-end proof: .scode/worker-state.json reflects every transition
         // through the stall-detect -> resolve-trust -> ready loop.
         use std::fs;
 
@@ -6512,8 +6511,7 @@ mod tests {
         fs::create_dir_all(&worktree).expect("create worktree");
         let cwd = worktree.to_str().expect("utf-8").to_string();
         let state_path = worktree
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("worker-state.json");
 
         // 1. Create worker WITHOUT trusted_roots
@@ -7351,11 +7349,10 @@ mod tests {
         let _guard = env_guard();
         let root = temp_path("project-skills");
         let skill_dir = root
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("skills")
             .join("plan");
-        let command_dir = root.join(".nexus").join("sudocode").join("commands");
+        let command_dir = root.join(".scode").join("commands");
         fs::create_dir_all(&skill_dir).expect("skill dir should exist");
         fs::create_dir_all(&command_dir).expect("command dir should exist");
         fs::write(
@@ -7379,7 +7376,7 @@ mod tests {
         assert!(skill_output["path"]
             .as_str()
             .expect("path")
-            .ends_with(".nexus/sudocode/skills/plan/SKILL.md"));
+            .ends_with(".scode/skills/plan/SKILL.md"));
 
         let command_result = execute_tool("Skill", &json!({ "skill": "/handoff" }))
             .expect("legacy command should resolve");
@@ -7388,7 +7385,7 @@ mod tests {
         assert!(command_output["path"]
             .as_str()
             .expect("path")
-            .ends_with(".nexus/sudocode/commands/handoff.md"));
+            .ends_with(".scode/commands/handoff.md"));
 
         std::env::set_current_dir(&original_dir).expect("restore cwd");
         fs::remove_dir_all(root).expect("temp project should clean up");
@@ -8995,7 +8992,7 @@ mod tests {
         let home = root.join("home");
         let cwd = root.join("cwd");
         std::fs::create_dir_all(home.join(".nexus").join("sudocode")).expect("home dir");
-        std::fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("cwd dir");
+        std::fs::create_dir_all(cwd.join(".scode")).expect("cwd dir");
         std::fs::write(
             home.join(".nexus").join("sudocode").join("settings.json"),
             r#"{"verbose":false}"#,
@@ -9061,10 +9058,9 @@ mod tests {
         let home = root.join("home");
         let cwd = root.join("cwd");
         std::fs::create_dir_all(home.join(".nexus").join("sudocode")).expect("home dir");
-        std::fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("cwd dir");
+        std::fs::create_dir_all(cwd.join(".scode")).expect("cwd dir");
         std::fs::write(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
             r#"{"permissions":{"defaultMode":"acceptEdits"}}"#,
         )
@@ -9085,15 +9081,13 @@ mod tests {
         assert_eq!(enter_output["currentLocalMode"], "plan");
 
         let local_settings = std::fs::read_to_string(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
         )
         .expect("local settings after enter");
         assert!(local_settings.contains(r#""defaultMode": "plan""#));
         let state = std::fs::read_to_string(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("tool-state")
                 .join("plan-mode.json"),
         )
@@ -9109,15 +9103,13 @@ mod tests {
         assert_eq!(exit_output["currentLocalMode"], "acceptEdits");
 
         let local_settings = std::fs::read_to_string(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
         )
         .expect("local settings after exit");
         assert!(local_settings.contains(r#""defaultMode": "acceptEdits""#));
         assert!(!cwd
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("tool-state")
             .join("plan-mode.json")
             .exists());
@@ -9149,7 +9141,7 @@ mod tests {
         let home = root.join("home");
         let cwd = root.join("cwd");
         std::fs::create_dir_all(home.join(".nexus").join("sudocode")).expect("home dir");
-        std::fs::create_dir_all(cwd.join(".nexus").join("sudocode")).expect("cwd dir");
+        std::fs::create_dir_all(cwd.join(".scode")).expect("cwd dir");
 
         let original_home = std::env::var("HOME").ok();
         let original_config_home = std::env::var("SUDO_CODE_CONFIG_HOME").ok();
@@ -9169,8 +9161,7 @@ mod tests {
         assert_eq!(exit_output["currentLocalMode"], serde_json::Value::Null);
 
         let local_settings = std::fs::read_to_string(
-            cwd.join(".nexus")
-                .join("sudocode")
+            cwd.join(".scode")
                 .join("settings.local.json"),
         )
         .expect("local settings after exit");
@@ -9182,8 +9173,7 @@ mod tests {
             "permissions override should be removed on exit"
         );
         assert!(!cwd
-            .join(".nexus")
-            .join("sudocode")
+            .join(".scode")
             .join("tool-state")
             .join("plan-mode.json")
             .exists());

@@ -369,8 +369,7 @@ fn run_case(case: ScenarioCase, workspace: &HarnessWorkspace, base_url: &str) ->
 fn prepare_auto_compact_fixture(workspace: &HarnessWorkspace) {
     let sessions_dir = workspace
         .root
-        .join(".nexus")
-        .join("sudocode")
+        .join(".scode")
         .join("sessions");
     fs::create_dir_all(&sessions_dir).expect("sessions dir should exist");
 
